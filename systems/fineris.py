@@ -287,10 +287,11 @@ class FinerisSystem:
         holdings: list[Holding],
         budget: float,
         profile: UserProfile,
-    ) -> list[Notification]:
-        """Run one FINERIS cycle with injected portfolio/profile (no JSON storage reads)."""
+    ) -> tuple[list[Notification], list[str]]:
+        """Run one FINERIS cycle with injected portfolio/profile (no JSON storage reads).
+        Returns (notifications, errors)."""
         if not holdings and not profile.watchlist:
-            return []
+            return [], []
         self._override = {"holdings": holdings, "budget": budget, "profile": profile}
         self._ephemeral = True
         try:
@@ -307,4 +308,4 @@ class FinerisSystem:
         finally:
             self._override = None
             self._ephemeral = False
-        return result.get("notifications", [])
+        return result.get("notifications", []), result.get("errors", [])

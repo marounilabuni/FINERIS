@@ -333,7 +333,7 @@ def register_routes(app: Flask) -> None:
 
         # 4. Run cycle
         try:
-            notifications = FinerisSystem(model=model).run_cycle_with_data(holdings, parsed.budget, profile)
+            notifications, cycle_errors = FinerisSystem(model=model).run_cycle_with_data(holdings, parsed.budget, profile)  # type: ignore[misc]
         except Exception as e:
             return jsonify({"status": "error", "error": f"Cycle failed: {e}", "response": "", "steps": []}), 500
 
@@ -341,6 +341,9 @@ def register_routes(app: Flask) -> None:
         response_lines = []
         if invalid:
             response_lines.append(f"Skipped invalid tickers: {', '.join(invalid)}")
+        if cycle_errors:
+            for err in cycle_errors:
+                response_lines.append(f"[ERROR] {err}")
         if not notifications:
             response_lines.append("No alerts generated for the given portfolio/watchlist.")
         for n in notifications:
