@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}— Profile{% endblock %}
+
+{% block content %}
+
+<h4 class="mb-4 fw-bold">Profile</h4>
+
+<!-- Name + Risk -->
+<div class="card mb-4">
+  <div class="card-header fw-semibold">Settings</div>
+  <div class="card-body">
+    <form method="POST" action="/profile/update" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label small">Name</label>
+        <input type="text" name="name" class="form-control" value="{{ profile.name }}" placeholder="Your name">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small">Risk Level</label>
+        <select name="risk" class="form-select">
+          <option value="low"    {% if profile.risk_level == "low"    %}selected{% endif %}>Low</option>
+          <option value="medium" {% if profile.risk_level == "medium" %}selected{% endif %}>Medium</option>
+          <option value="high"   {% if profile.risk_level == "high"   %}selected{% endif %}>High</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Watchlist -->
+<div class="card">
+  <div class="card-header fw-semibold">Watchlist</div>
+  <div class="card-body">
+
+    {% if profile.watchlist %}
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      {% for ticker in profile.watchlist %}
+      <div class="d-flex align-items-center watchlist-chip">
+        <span class="fw-semibold me-2">{{ ticker }}</span>
+        <form method="POST" action="/profile/watchlist/remove/{{ ticker }}" class="d-inline">
+          <button type="submit" class="btn-close btn-close-sm" title="Remove"></button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted small mb-3">No tickers in watchlist yet.</p>
+    {% endif %}
+
+    <form method="POST" action="/profile/watchlist/add" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label small">Add Ticker</label>
+        <input type="text" name="ticker" class="form-control" placeholder="BTC-USD" required>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100">Add</button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+{% endblock %}

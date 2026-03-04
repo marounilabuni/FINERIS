@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.env
+storage/portfolio.json
+storage/user_profile.json
+storage/seen_news.json
+storage/cooldowns.json
+storage/notifications.log
+storage/_backup_*
+.vscode/
+*.log
+.DS_Store

@@ -1,0 +1,124 @@
+/* ── Global ───────────────────────────────────────────────── */
+body {
+  background-color: #f4f6f9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ── Summary cards ───────────────────────────────────────── */
+.summary-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px 20px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07);
+}
+
+.summary-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.summary-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* ── Notification cards ──────────────────────────────────── */
+.notif-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  border-left: 4px solid #ccc;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07);
+}
+
+.notif-ACTION  { border-left-color: #ef4444; }
+.notif-WARNING { border-left-color: #f97316; }
+.notif-INFO    { border-left-color: #3b82f6; }
+
+.agent-icon {
+  font-size: 1.1rem;
+}
+
+.ticker-badge {
+  background: #e8eaf6;
+  color: #3949ab;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: .04em;
+}
+
+.rec-badge {
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.rec-BUY   { background: #dcfce7; color: #16a34a; }
+.rec-SELL  { background: #fee2e2; color: #dc2626; }
+.rec-HOLD  { background: #fff7ed; color: #ea580c; }
+.rec-PASS  { background: #eff6ff; color: #2563eb; }
+
+/* Reasoning content */
+.reasoning-preview {
+  line-height: 1.5;
+}
+
+.reasoning-full {
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+.reasoning-full h2,
+.reasoning-full h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+.reasoning-full ul {
+  padding-left: 20px;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 0.8rem;
+  padding: 0;
+  cursor: pointer;
+}
+
+.toggle-btn:hover {
+  text-decoration: underline;
+}
+
+/* ── Watchlist chips ─────────────────────────────────────── */
+.watchlist-chip {
+  background: #e8eaf6;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 0.85rem;
+  color: #3949ab;
+}
+
+/* ── Misc ────────────────────────────────────────────────── */
+.card {
+  border: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07);
+  border-radius: 10px;
+}
+
+.card-header {
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  border-radius: 10px 10px 0 0 !important;
+}

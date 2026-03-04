@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FINERIS - The Autonomous Hedge Fund</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* --- GLOBAL VARIABLES --- */
+        :root {
+            --bg-color: #000000;
+            --card-bg: #0a0a0a;
+            --border-color: #333;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            
+            /* Neon Palette for Projector Visibility */
+            --accent-cyan: #00f3ff;
+            --accent-green: #00ff41;
+            --accent-red: #ff2a2a;
+            --accent-purple: #bd00ff;
+            --accent-orange: #ff9e00;
+        }
+
+        /* --- RESET --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- DECK CONTAINER --- */
+        #deck-container {
+            width: 1600px;
+            height: 900px;
+            position: relative;
+            background: #030303;
+            overflow: hidden;
+            box-shadow: 0 0 100px rgba(0,0,0,1);
+            border: 1px solid #111;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            padding: 50px 80px;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease-in-out;
+            z-index: 1;
+            background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%);
+        }
+
+        .slide.active {
+            opacity: 1;
+            pointer-events: all;
+            z-index: 10;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1 {
+            font-size: 110px;
+            font-weight: 900;
+            line-height: 0.9;
+            letter-spacing: -3px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(255,255,255,0.1);
+        }
+
+        h2 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 48px;
+            color: var(--accent-cyan);
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            border-left: 10px solid var(--accent-cyan);
+            padding-left: 25px;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(90deg, rgba(0, 243, 255, 0.1), transparent);
+        }
+
+        p, li {
+            font-size: 28px;
+            color: #ccc;
+            line-height: 1.5;
+            max-width: 1300px;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .highlight { color: var(--accent-green); font-weight: bold; }
+        .alert { color: var(--accent-red); font-weight: bold; }
+
+        /* --- SLIDE 1: HERO --- */
+        #hero-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.3;
+        }
+        
+        .hero-content {
+            position: relative; z-index: 2; height: 100%;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+
+        .team-footer {
+            margin-top: auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            border-top: 2px solid #333;
+            padding-top: 40px;
+        }
+        
+        .student-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid #333;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: left;
+        }
+        .student-card h3 { 
+            font-size: 28px; /* Adjusted size */
+            color: #fff; margin-bottom: 8px; font-weight: 800; 
+        }
+        .student-card p { 
+            font-size: 18px; color: #888; font-family: 'JetBrains Mono'; margin: 0; 
+        }
+
+        /* --- SLIDE 2: PAIN POINTS --- */
+        .pain-grid {
+            display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 60px; height: 100%; align-items: center;
+        }
+        .pain-item { margin-bottom: 40px; display: flex; align-items: center; gap: 30px; }
+        
+        /* Updated Logo Containers */
+        .pain-logo-container {
+            width: 110px; height: 110px;
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        /* Panic Style */
+        .pain-logo-container.panic {
+            background: linear-gradient(135deg, rgba(255, 42, 42, 0.2), #000);
+            border: 2px solid var(--accent-red);
+            box-shadow: 0 0 30px rgba(255, 42, 42, 0.2);
+        }
+        .pain-logo-container.panic i { font-size: 50px; color: var(--accent-red); }
+        .pain-logo-badge {
+            position: absolute; top: -12px; right: -12px;
+            background: var(--accent-red); color: #000;
+            font-size: 12px; font-weight: bold; padding: 5px 12px;
+            border-radius: 20px; font-family: 'JetBrains Mono'; border: 2px solid #000;
+        }
+
+        /* FOMO Style */
+        .pain-logo-container.fomo {
+            background: linear-gradient(135deg, rgba(255, 158, 0, 0.2), #000);
+            border: 2px solid var(--accent-orange);
+            box-shadow: 0 0 30px rgba(255, 158, 0, 0.2);
+        }
+        .pain-logo-container.fomo i { font-size: 50px; color: var(--accent-orange); }
+
+        /* Data Style */
+        .pain-logo-container.data {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), #000);
+            border: 2px solid #fff;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+        }
+        .pain-logo-container.data i { font-size: 50px; color: #fff; }
+        
+        .visual-chaos {
+            height: 600px;
+            background: #000;
+            border: 4px solid #222;
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+        }
+        
+        #crash-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0.5;
+        }
+
+        .panic-overlay {
+            z-index: 2;
+            text-align: center;
+            background: rgba(0,0,0,0.85);
+            padding: 40px 60px;
+            border-radius: 20px;
+            border: 3px solid var(--accent-red);
+            backdrop-filter: blur(8px);
+            animation: pulse-red 2s infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .panic-logo {
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            border: 4px solid var(--accent-red);
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 20px;
+            background: rgba(255,0,0,0.1);
+            box-shadow: 0 0 30px rgba(255,0,0,0.3);
+        }
+        
+        .panic-text { font-size: 80px; font-weight: 900; color: #fff; letter-spacing: 5px; line-height: 1; }
+        .panic-sub { font-size: 20px; color: var(--accent-red); margin-top: 10px; font-family: 'JetBrains Mono'; letter-spacing: 2px;}
+
+        /* --- SLIDE 3: AGENTS (Redesigned) --- */
+        .agents-wrapper {
+            display: flex; gap: 40px; height: 550px; align-items: stretch; margin-top: 30px;
+        }
+        .agent-card {
+            flex: 1;
+            background: #080808;
+            border: 1px solid #333;
+            border-radius: 20px;
+            padding: 40px;
+            transition: all 0.4s ease;
+            display: flex; flex-direction: column; justify-content: flex-start;
+            position: relative; overflow: hidden;
+        }
+        
+        /* Agent Accents */
+        .agent-card.guardian::before { content:''; position:absolute; top:0; left:0; width:100%; height:6px; background: var(--accent-purple); box-shadow: 0 0 20px var(--accent-purple); }
+        .agent-card.supervisor::before { content:''; position:absolute; top:0; left:0; width:100%; height:6px; background: #fff; box-shadow: 0 0 20px #fff; }
+        .agent-card.scout::before { content:''; position:absolute; top:0; left:0; width:100%; height:6px; background: var(--accent-orange); box-shadow: 0 0 20px var(--accent-orange); }
+
+        .agent-card:hover { transform: translateY(-15px); background: #111; }
+        .agent-card.guardian:hover { border-color: var(--accent-purple); }
+        .agent-card.scout:hover { border-color: var(--accent-orange); }
+        .agent-card.supervisor:hover { border-color: #fff; }
+
+        .agent-icon { font-size: 80px; margin: 30px 0; color: #555; transition: 0.3s; }
+        .agent-card.guardian:hover .agent-icon { color: var(--accent-purple); text-shadow: 0 0 30px var(--accent-purple); }
+        .agent-card.scout:hover .agent-icon { color: var(--accent-orange); text-shadow: 0 0 30px var(--accent-orange); }
+        .agent-card.supervisor:hover .agent-icon { color: #fff; text-shadow: 0 0 30px #fff; }
+
+        .agent-title { font-size: 40px; margin-bottom: 10px; font-weight: 800; color: #fff; }
+        .agent-short { font-size: 20px; font-family: 'JetBrains Mono'; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Reveal Info */
+        .agent-info {
+            margin-top: auto;
+            opacity: 0.3;
+            transform: translateY(20px);
+            transition: all 0.4s;
+            border-top: 1px solid #333;
+            padding-top: 20px;
+        }
+        .agent-card:hover .agent-info { opacity: 1; transform: translateY(0); }
+        .info-row { margin-bottom: 15px; font-size: 18px; color: #ccc; }
+        .info-label { color: #666; font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px; font-family: 'JetBrains Mono'; }
+
+        /* --- SLIDE 4: ARCHITECTURE --- */
+        .arch-diagram {
+            display: flex; justify-content: space-between; align-items: center; margin-top: 80px; position: relative;
+        }
+        .node {
+            width: 250px; padding: 30px 20px; background: #0f0f0f; border: 2px solid #333; 
+            text-align: center; border-radius: 16px; z-index: 2; transition: 0.3s;
+        }
+        .node:hover { border-color: var(--accent-cyan); box-shadow: 0 0 40px rgba(0,240,255,0.2); background: #151515; transform: scale(1.1); }
+        .node i { font-size: 60px; margin-bottom: 20px; color: #fff; }
+        .node h4 { font-size: 24px; margin-bottom: 10px; color: var(--accent-cyan); }
+        .node p { font-size: 16px; color: #888; font-family: 'JetBrains Mono'; }
+        
+        .connector {
+            position: absolute; top: 50%; left: 5%; width: 90%; height: 4px; 
+            background: linear-gradient(90deg, #333 0%, var(--accent-cyan) 50%, #333 100%);
+            z-index: 1;
+        }
+        
+        /* Central Logo on Connector */
+        .arch-logo-node {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 80px; height: 80px; background: #000; border: 2px solid var(--accent-cyan);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            z-index: 3; box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+        }
+        .arch-logo-node i { color: var(--accent-cyan); font-size: 30px; }
+
+        /* --- SLIDE 5: IPHONE CHAT SIMULATION --- */
+        .phone-wrapper {
+            width: 100%; height: 680px; display: flex; justify-content: center; align-items: center; margin-top: 10px;
+        }
+        
+        .iphone {
+            width: 340px; /* Optimal size */
+            height: 650px;
+            background: #000;
+            border-radius: 40px;
+            border: 8px solid #222; /* Thinner bezel */
+            box-shadow: 0 0 0 2px #444, 0 30px 80px rgba(0,0,0,0.8);
+            position: relative;
+            overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+        
+        .notch {
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 100px; height: 25px; background: #222; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; z-index: 20;
+        }
+
+        .chat-header {
+            background: rgba(20, 20, 20, 0.95);
+            padding: 35px 20px 15px 20px;
+            border-bottom: 1px solid #333;
+            display: flex; align-items: center; justify-content: space-between;
+            color: #fff; z-index: 5;
+        }
+        .chat-title { font-weight: bold; font-size: 14px; }
+        .chat-members { font-size: 10px; color: #888; margin-top: 2px; }
+
+        .chat-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #000;
+            scroll-behavior: smooth;
+        }
+        /* Hide Scrollbar */
+        .chat-body::-webkit-scrollbar { width: 4px; }
+        .chat-body::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+        /* Messages */
+        .msg-row { display: flex; gap: 10px; width: 100%; opacity: 0; transform: translateY(20px); transition: all 0.4s ease; margin-bottom: 5px;}
+        .msg-row.show { opacity: 1; transform: translateY(0); }
+        
+        .msg-avatar { 
+            width: 32px; height: 32px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 14px; font-weight: bold; color: #000; flex-shrink: 0;
+        }
+        
+        .msg-bubble {
+            max-width: 90%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 18px; /* INCREASED FONT SIZE FOR CLASS */
+            line-height: 1.4;
+            color: #fff;
+            position: relative;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* Roles */
+        .role-sup .msg-avatar { background: #fff; }
+        .role-sup .msg-bubble { background: #222; border: 1px solid #444; border-top-left-radius: 4px; }
+        
+        .role-gua .msg-avatar { background: var(--accent-purple); color: #fff; }
+        .role-gua .msg-bubble { background: #1a1025; border: 1px solid var(--accent-purple); border-top-left-radius: 4px; color: #e0d0ff; }
+        
+        .role-sco .msg-avatar { background: var(--accent-orange); color: #000; }
+        .role-sco .msg-bubble { background: #251a10; border: 1px solid var(--accent-orange); border-top-left-radius: 4px; color: #ffe0d0; }
+
+        .msg-sender { font-size: 12px; opacity: 0.6; margin-bottom: 4px; display: block; font-weight: bold; }
+
+        /* System Alert */
+        .sys-alert {
+            align-self: center; width: 100%; text-align: center;
+            opacity: 0; transform: scale(0.9); transition: 0.4s;
+        }
+        .sys-alert.show { opacity: 1; transform: scale(1); }
+        .alert-box {
+            display: inline-block; background: rgba(50,50,50,0.5); 
+            padding: 8px 16px; border-radius: 12px; font-size: 14px; color: #ccc;
+            border: 1px solid #333; font-weight: bold;
+        }
+
+        /* Typing Animation */
+        .typing {
+            display: none; align-self: flex-start; margin-left: 42px;
+            background: #222; padding: 8px 12px; border-radius: 12px;
+        }
+        .dot { width: 6px; height: 6px; background: #888; border-radius: 50%; display: inline-block; animation: bounce 1.4s infinite ease-in-out both; }
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        /* --- SLIDE 6: SUMMARY --- */
+        .summary-stats { display: flex; justify-content: center; gap: 100px; margin-top: 100px; }
+        .stat-box { text-align: center; }
+        .stat-num { font-size: 120px; font-weight: 900; color: var(--accent-green); line-height: 1; }
+        .stat-desc { font-size: 30px; font-weight: bold; color: #fff; margin-top: 20px; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* --- CONTROLS --- */
+        .nav-btn {
+            position: absolute; bottom: 30px; right: 30px;
+            width: 60px; height: 60px; background: #222; border: 2px solid #444; color: #fff;
+            border-radius: 50%; font-size: 24px; cursor: pointer; z-index: 100;
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        }
+        .nav-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        .nav-btn.prev { right: 100px; }
+
+        .run-btn {
+            background: var(--accent-cyan); color: #000; border: none;
+            padding: 10px 30px; font-weight: bold; font-family: 'JetBrains Mono'; font-size: 16px;
+            cursor: pointer; border-radius: 50px; box-shadow: 0 0 30px rgba(0,240,255,0.3);
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+        }
+        .run-btn:hover { background: #fff; transform: translateX(-50%) scale(1.05); }
+
+        /* --- ANIMATIONS --- */
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 42, 42, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(255, 42, 42, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 42, 42, 0); } }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+    </style>
+</head>
+<body>
+
+<div id="deck-container">
+
+    <div class="slide active" id="slide-1">
+        <canvas id="hero-canvas"></canvas>
+        <div class="hero-content">
+            <div class="mono" style="color: var(--accent-cyan); font-size: 28px; margin-bottom: 20px;">>> FINAL PROJECT: FINERIS</div>
+            <h1>The Autonomous<br>Hedge Fund.</h1>
+            <p style="font-size: 38px; color: #ddd; margin-top: 30px; border-left: 8px solid var(--accent-green); padding-left: 30px;">
+                Moving from Passive Dashboards to <span class="highlight">Active Agents</span>.
+            </p>
+            
+            <div class="team-footer">
+                <div class="student-card">
+                    <h3>Yosra Fhamne</h3>
+                    <p>204138879</p>
+                    <p>soso7492@campus.technion.ac.il</p>
+                </div>
+                <div class="student-card">
+                    <h3>Maroun Ilabuni</h3>
+                    <p>324033596</p>
+                    <p>marounila@campus.technion.ac.il</p>
+                </div>
+                <div class="student-card">
+                    <h3>Elad Elie Pollak</h3>
+                    <p>205818818</p>
+                    <p>eladpollak@campus.technion.ac.il</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide" id="slide-2">
+        <h2>01 // The Retail Investor Dilemma</h2>
+        <div class="pain-grid">
+            <div>
+                <div class="pain-item">
+                    <div class="pain-logo-container panic">
+                        <span class="pain-logo-badge">ALERT</span>
+                        <i class="fa-solid fa-chart-line-down"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 36px; margin-bottom: 10px; color: #fff;">Panic Selling</h3>
+                        <p>Reacting to bad news instantly without context.</p>
+                    </div>
+                </div>
+                <div class="pain-item">
+                    <div class="pain-logo-container fomo">
+                        <i class="fa-solid fa-eye-slash"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 36px; margin-bottom: 10px; color: #fff;">FOMO</h3>
+                        <p>Hearing about opportunities only after they are "news".</p>
+                    </div>
+                </div>
+                <div class="pain-item">
+                    <div class="pain-logo-container data">
+                        <i class="fa-solid fa-file-contract"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 36px; margin-bottom: 10px; color: #fff;">Data Overload</h3>
+                        <p>Impossible to read 100-page SEC reports daily.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="visual-chaos">
+                <canvas id="crash-canvas"></canvas>
+                <div class="panic-overlay">
+                    <div class="panic-logo">
+                        <i class="fa-solid fa-shield-halved" style="font-size: 40px; color: var(--accent-red);"></i>
+                        <i class="fa-solid fa-exclamation" style="font-size: 40px; color: #fff; margin-left: -15px; z-index: 2;"></i>
+                    </div>
+                    <div class="panic-text">PANIC</div>
+                    <div class="panic-sub">MARKET CRASH DETECTED</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide" id="slide-3">
+        <h2>02 // Meet The Team (Agents)</h2>
+        <p>FINERIS is a multi-agent system based on the <strong>Supervisor Architecture</strong>.</p>
+        
+        <div class="agents-wrapper">
+            <div class="agent-card guardian">
+                <i class="fa-solid fa-shield-halved agent-icon"></i>
+                <h3 class="agent-title">The Guardian</h3>
+                <p class="agent-short">Protects Assets</p>
+                <div class="agent-info">
+                    <div class="info-row"><span class="info-label">TOOL</span> RAG (SEC 10-K)</div>
+                    <div class="info-row"><span class="info-label">LOGIC</span> "Has this happened before?"</div>
+                </div>
+            </div>
+
+            <div class="agent-card supervisor">
+                <i class="fa-solid fa-user-tie agent-icon"></i>
+                <h3 class="agent-title">Supervisor</h3>
+                <p class="agent-short">Manager & Router</p>
+                <div class="agent-info">
+                    <div class="info-row"><span class="info-label">INPUT</span> User Profile (JSON)</div>
+                    <div class="info-row"><span class="info-label">LOGIC</span> Synthesizes & Decides.</div>
+                </div>
+            </div>
+
+            <div class="agent-card scout">
+                <i class="fa-solid fa-binoculars agent-icon"></i>
+                <h3 class="agent-title">The Scout</h3>
+                <p class="agent-short">Growth Hunter</p>
+                <div class="agent-info">
+                    <div class="info-row"><span class="info-label">TOOL</span> Market Scanner</div>
+                    <div class="info-row"><span class="info-label">LOGIC</span> Momentum + Fundamentals.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide" id="slide-4">
+        <h2>03 // System Blueprint</h2>
+        <div style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%;">
+            <img src="https://i.postimg.cc/J4K5vzTp/Gemini-Generated-Image-igr1uzigr1uzigr1.png" 
+                 alt="Fineris Architecture" 
+                 style="max-width: 95%; max-height: 80%; border-radius: 20px; border: 2px solid #333; box-shadow: 0 0 80px rgba(0,0,0,0.8);">
+        </div>
+    </div>
+
+    <div class="slide" id="slide-5">
+        <h2>04 // Logic Flow Diagram</h2>
+        <p>Flow of data from trigger to action.</p>
+        
+        <div class="arch-diagram">
+            <div class="connector"></div>
+            <div class="arch-logo-node">
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+
+            <div class="node">
+                <i class="fa-solid fa-bolt" style="color: var(--accent-orange);"></i>
+                <h4>Trigger</h4>
+                <p>News Stream / Chat</p>
+            </div>
+            <div class="node" style="border-color: var(--accent-cyan); background: #000;">
+                <i class="fa-solid fa-brain" style="color: var(--accent-cyan);"></i>
+                <h4>ReAct Brain</h4>
+                <p>Supervisor (LangChain)</p>
+            </div>
+            <div class="node">
+                <i class="fa-solid fa-database" style="color: var(--accent-purple);"></i>
+                <h4>Context Store</h4>
+                <p>Vector DB + Yahoo API</p>
+            </div>
+            <div class="node">
+                <i class="fa-solid fa-paper-plane" style="color: var(--accent-green);"></i>
+                <h4>Action</h4>
+                <p>Alert / Execute Trade</p>
+            </div>
+        </div>
+        <div style="margin-top: 80px; text-align: center;">
+            <div style="display: inline-block; border: 2px solid #333; padding: 25px 50px; border-radius: 50px; background: #111;">
+                <span class="mono" style="font-size: 22px; color: var(--accent-cyan);">DATA STACK:</span>
+                <span style="font-size: 22px; color: #fff; margin-left: 10px;">14GB SEC Filings (Kaggle) • yfinance API • User JSON</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide" id="slide-6">
+        <div style="text-align: center; margin-bottom: 10px;">
+            <h2>05 // Live Simulation: "The Perfect Storm"</h2>
+        </div>
+
+        <div class="phone-wrapper">
+            <div class="iphone">
+                <div class="notch"></div>
+                <div class="chat-header">
+                    <div>
+                        <div class="chat-title">FINERIS Internal Chat</div>
+                        <div class="chat-members">Supervisor, Guardian, Scout</div>
+                    </div>
+                    <i class="fa-solid fa-ellipsis" style="color: var(--accent-cyan)"></i>
+                </div>
+                
+                <div class="chat-body" id="chat-feed">
+                    <div style="text-align: center; color: #444; margin-top: 50%; font-size: 13px;">Encryption Active.<br>Waiting for market trigger...</div>
+                </div>
+                
+                <div class="typing" id="typing-bubble">
+                    <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                </div>
+            </div>
+        </div>
+        
+        <button class="run-btn" onclick="runChatSim()"><i class="fa-solid fa-play"></i> INITIATE AGENTS</button>
+    </div>
+
+    <div class="slide" id="slide-7">
+        <div class="hero-content" style="text-align: center; justify-content: center;">
+            <h1>Democratizing<br>Financial Intelligence.</h1>
+            <div class="summary-stats">
+                <div class="stat-box">
+                    <div class="stat-num">100%</div>
+                    <div class="stat-desc">Personalized</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-num" style="color: var(--accent-cyan);">24/7</div>
+                    <div class="stat-desc">Monitoring</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-num" style="color: #fff;">0</div>
+                    <div class="stat-desc">Panic</div>
+                </div>
+            </div>
+            <div class="team-footer" style="margin-top: 100px; border: none;">
+                <div style="grid-column: span 3; text-align: center;">
+                    <p class="mono" style="font-size: 30px; color: #666;">FINERIS PROJECT // THANK YOU</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide" id="slide-8">
+        <div class="hero-content" style="text-align: center; justify-content: center; align-items: center;">
+            <i class="fa-regular fa-comments" style="font-size: 120px; color: var(--accent-cyan); margin-bottom: 40px;"></i>
+            <h1>Questions?</h1>
+            <p style="font-size: 30px; color: #888;">Thank you for listening.</p>
+        </div>
+    </div>
+
+    <button class="nav-btn prev" onclick="changeSlide(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+    <button class="nav-btn next" onclick="changeSlide(1)"><i class="fa-solid fa-chevron-right"></i></button>
+
+</div>
+
+<script>
+    // --- SLIDESHOW ENGINE ---
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    function changeSlide(dir) {
+        slides[currentSlide].classList.remove('active');
+        currentSlide = (currentSlide + dir + totalSlides) % totalSlides;
+        slides[currentSlide].classList.add('active');
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if(e.key === 'ArrowRight') changeSlide(1);
+        if(e.key === 'ArrowLeft') changeSlide(-1);
+    });
+
+    // --- SLIDE 1: NEURAL BG ---
+    const canvas1 = document.getElementById('hero-canvas');
+    const ctx1 = canvas1.getContext('2d');
+    canvas1.width = 1600; canvas1.height = 900;
+    
+    const particles = Array.from({length: 60}, () => ({
+        x: Math.random() * 1600, y: Math.random() * 900,
+        vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5
+    }));
+
+    function animateHero() {
+        ctx1.clearRect(0,0,1600,900);
+        ctx1.strokeStyle = 'rgba(255,255,255,0.1)';
+        particles.forEach(p => {
+            p.x += p.vx; p.y += p.vy;
+            if(p.x<0||p.x>1600) p.vx*=-1; if(p.y<0||p.y>900) p.vy*=-1;
+            ctx1.beginPath(); ctx1.arc(p.x,p.y,2,0,Math.PI*2); ctx1.fillStyle='#555'; ctx1.fill();
+            particles.forEach(p2 => {
+                if(Math.hypot(p.x-p2.x, p.y-p2.y) < 150) {
+                    ctx1.beginPath(); ctx1.moveTo(p.x,p.y); ctx1.lineTo(p2.x,p2.y); ctx1.stroke();
+                }
+            });
+        });
+        requestAnimationFrame(animateHero);
+    }
+    animateHero();
+
+    // --- SLIDE 2: MARKET CRASH CANVAS ---
+    const canvas2 = document.getElementById('crash-canvas');
+    const ctx2 = canvas2.getContext('2d');
+    canvas2.width = 600; canvas2.height = 600;
+    
+    let candles = [];
+    let currentY = 100;
+    
+    function animateCrash() {
+        ctx2.fillStyle = '#000';
+        ctx2.fillRect(0,0,600,600);
+        
+        // Add new candle
+        if(Math.random() > 0.5) {
+            let height = Math.random() * 40 + 10;
+            let move = (Math.random() - 0.3) * 20; // Bias down
+            currentY += move;
+            if(currentY > 550) currentY = 100;
+            
+            candles.push({x: 600, y: currentY, h: height, color: move > 0 ? '#ff2a2a' : '#00ff41'});
+        }
+        
+        // Draw & Move
+        for(let i=0; i<candles.length; i++) {
+            let c = candles[i];
+            c.x -= 2;
+            
+            ctx2.fillStyle = c.color;
+            ctx2.fillRect(c.x, c.y, 8, c.h);
+            ctx2.fillRect(c.x+3, c.y-10, 2, c.h+20); // wick
+            
+            if(c.x < -10) { candles.splice(i, 1); i--; }
+        }
+        requestAnimationFrame(animateCrash);
+    }
+    animateCrash();
+
+    // --- SLIDE 6: CHAT SIMULATION (AUTONOMOUS UPDATE) ---
+    const chatFeed = document.getElementById('chat-feed');
+    const typing = document.getElementById('typing-bubble');
+
+    const script = [
+        { type: 'sys', text: 'Market Alert: TSLA drops 5% on Recall News.' },
+        { delay: 800 },
+        { type: 'sup', text: '<b>TSLA Alert</b>. Checking user constraints. @Guardian verify?' },
+        { delay: 1000 },
+        { type: 'gua', text: 'Detected Panic Sell-Off. Historical data confirms recovery. <br><b>ACTION: POSITION LOCKED.</b>' },
+        { delay: 1500 },
+        { type: 'sys', text: 'Market Alert: NVDA surges on Q3 Earnings.' },
+        { delay: 800 },
+        { type: 'sco', text: 'Strong Momentum. Cash Available. <br><b>ACTION: BUY ORDER EXECUTED.</b>' },
+        { delay: 1200 },
+        { type: 'sup', text: '<b>AUTONOMOUS REPORT:</b><br>1. TSLA: Protected (Not Sold).<br>2. NVDA: Bought automatically.<br><i>Portfolio Rebalanced.</i>' }
+    ];
+
+    function runChatSim() {
+        chatFeed.innerHTML = '';
+        let i = 0;
+        let delaySum = 0;
+
+        script.forEach(step => {
+            if(step.delay) {
+                delaySum += step.delay;
+            } else {
+                setTimeout(() => {
+                    // Show typing for agents
+                    if(step.type !== 'sys') {
+                        typing.style.display = 'block';
+                        chatFeed.scrollTop = chatFeed.scrollHeight;
+                        setTimeout(() => {
+                            typing.style.display = 'none';
+                            addMsg(step);
+                        }, 800);
+                    } else {
+                        addMsg(step);
+                    }
+                }, delaySum);
+                delaySum += 800; // Base delay for next msg
+            }
+        });
+    }
+
+    function addMsg(msg) {
+        const div = document.createElement('div');
+        div.className = 'msg-row show';
+        
+        let av = '';
+        let bubClass = 'msg-bubble ';
+        
+        if(msg.type === 'sys') {
+            div.innerHTML = `<div class="sys-alert show"><div class="alert-box"><i class="fa-solid fa-bell"></i> ${msg.text}</div></div>`;
+        } else {
+            if(msg.type === 'sup') { av = 'S'; div.classList.add('role-sup'); bubClass += 'supervisor'; }
+            if(msg.type === 'gua') { av = 'G'; div.classList.add('role-gua'); bubClass += 'guardian'; }
+            if(msg.type === 'sco') { av = 'Sc'; div.classList.add('role-sco'); bubClass += 'scout'; }
+            
+            div.innerHTML = `
+                <div class="msg-avatar">${av}</div>
+                <div class="${bubClass}">
+                    <span class="msg-sender">${av === 'S' ? 'SUPERVISOR' : (av === 'G' ? 'GUARDIAN' : 'SCOUT')}</span>
+                    ${msg.text}
+                </div>
+            `;
+        }
+        
+        chatFeed.appendChild(div);
+        chatFeed.scrollTop = chatFeed.scrollHeight;
+    }
+
+</script>
+
+</body>
+</html>

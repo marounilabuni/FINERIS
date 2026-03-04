@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}— Portfolio{% endblock %}
+
+{% block content %}
+
+<h4 class="mb-4 fw-bold">Portfolio</h4>
+
+<!-- Holdings table -->
+{% if holdings %}
+<div class="card mb-4">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Ticker</th>
+          <th>Quantity</th>
+          <th>Avg Buy Price</th>
+          <th>Total Cost</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in holdings %}
+        <tr>
+          <td class="fw-semibold">{{ h.ticker }}</td>
+          <td>{{ h.quantity }}</td>
+          <td>${{ "%.2f" | format(h.avg_buy_price) }}</td>
+          <td>${{ "{:,.2f}".format(h.quantity * h.avg_buy_price) }}</td>
+          <td class="text-end d-flex gap-2 justify-content-end">
+            <button class="btn btn-sm btn-outline-secondary"
+                    onclick="toggleEdit('{{ h.ticker }}')">Edit</button>
+            <form method="POST" action="/portfolio/remove/{{ h.ticker }}"
+                  onsubmit="return confirm('Remove {{ h.ticker }}?')">
+              <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+            </form>
+          </td>
+        </tr>
+        <!-- Inline edit row (hidden by default) -->
+        <tr id="edit-{{ h.ticker }}" class="d-none table-light">
+          <td colspan="5">
+            <form method="POST" action="/portfolio/update/{{ h.ticker }}"
+                  class="row g-2 align-items-end py-1">
+              <div class="col-md-3">
+                <label class="form-label small">New Quantity</label>
+                <input type="number" name="quantity" class="form-control form-control-sm"
+                       value="{{ h.quantity }}" step="any" min="0.0001" required>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label small">New Avg Buy Price ($)</label>
+                <input type="number" name="price" class="form-control form-control-sm"
+                       value="{{ h.avg_buy_price }}" step="any" min="0.0001" required>
+              </div>
+              <div class="col-md-2">
+                <button type="submit" class="btn btn-sm btn-primary w-100">Save</button>
+              </div>
+              <div class="col-md-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary w-100"
+                        onclick="toggleEdit('{{ h.ticker }}')">Cancel</button>
+              </div>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<p class="text-muted mb-4">No holdings yet. Add one below.</p>
+{% endif %}
+
+<!-- Add holding -->
+<div class="card mb-4">
+  <div class="card-header fw-semibold">Add Holding</div>
+  <div class="card-body">
+    <form method="POST" action="/portfolio/add" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label small">Ticker</label>
+        <input type="text" name="ticker" class="form-control" placeholder="TSLA" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">Quantity</label>
+        <input type="number" name="quantity" class="form-control" placeholder="10" step="any" min="0" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">Avg Buy Price ($)</label>
+        <input type="number" name="price" class="form-control" placeholder="200.00" step="any" min="0" required>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-primary w-100">Add</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Budget -->
+<div class="card">
+  <div class="card-header fw-semibold">Available Budget</div>
+  <div class="card-body">
+    <form method="POST" action="/portfolio/budget" class="row g-2 align-items-end">
+      <div class="col-md-6">
+        <label class="form-label small">Amount ($) — currently <strong>${{ "{:,.2f}".format(budget) }}</strong></label>
+        <input type="number" name="amount" class="form-control" value="{{ budget }}" step="any" min="0" required>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-outline-primary w-100">Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleEdit(ticker) {
+  const row = document.getElementById('edit-' + ticker);
+  row.classList.toggle('d-none');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+{% block title %}— Analyze{% endblock %}
+
+{% block content %}
+<h4 class="mb-4 fw-bold">Run Analysis</h4>
+
+<!-- ── Profile ─────────────────────────────────────────────── -->
+<div class="card mb-3">
+  <div class="card-header fw-semibold">Investor Profile</div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label small">Name</label>
+        <input id="inp-name" type="text" class="form-control" placeholder="User" value="User">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small">Risk Level</label>
+        <select id="inp-risk" class="form-select">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small">Budget ($)</label>
+        <input id="inp-budget" type="number" class="form-control" placeholder="10000" value="10000" min="0" step="any">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Holdings ────────────────────────────────────────────── -->
+<div class="card mb-3">
+  <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+    Holdings
+    <button class="btn btn-sm btn-outline-primary" onclick="addHolding()">+ Add</button>
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-sm mb-0" id="holdings-table">
+      <thead class="table-light">
+        <tr>
+          <th>Ticker</th>
+          <th>Quantity</th>
+          <th>Avg Buy Price ($)</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="holdings-body"></tbody>
+    </table>
+    <p id="no-holdings" class="text-muted small px-3 py-2 mb-0">No holdings. Click + Add.</p>
+  </div>
+</div>
+
+<!-- ── Watchlist ────────────────────────────────────────────── -->
+<div class="card mb-4">
+  <div class="card-header fw-semibold">Watchlist</div>
+  <div class="card-body">
+    <div class="d-flex gap-2 mb-2">
+      <input id="inp-watch" type="text" class="form-control" placeholder="NVDA" style="max-width:160px"
+             onkeydown="if(event.key==='Enter'){event.preventDefault();addWatch();}">
+      <button class="btn btn-outline-primary" onclick="addWatch()">+ Add</button>
+    </div>
+    <div id="watchlist-tags" class="d-flex flex-wrap gap-2"></div>
+  </div>
+</div>
+
+<!-- ── Run ─────────────────────────────────────────────────── -->
+<div class="d-flex align-items-center gap-3 flex-wrap mb-4">
+  <select id="inp-model" class="form-select w-auto">
+    {% for model_id, model_name in available_models.items() %}
+      <option value="{{ model_id }}" {{ "selected" if model_id == "claude-sonnet-4-6" }}>{{ model_name }}</option>
+    {% endfor %}
+  </select>
+  <button id="run-btn" class="btn btn-primary btn-lg px-5" onclick="runAnalysis()">
+    ▶ Run Analysis
+  </button>
+  <div id="loading-state" class="d-none d-flex align-items-center gap-2 text-muted">
+    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+    Analyzing… this may take ~30s
+  </div>
+</div>
+
+<!-- ── Results ─────────────────────────────────────────────── -->
+<div id="results-section" class="d-none">
+
+  <div id="error-box" class="alert alert-danger d-none"></div>
+
+  <!-- Notification cards -->
+  <div id="notif-feed"></div>
+
+  <!-- Steps accordion -->
+  <div id="steps-box" class="d-none mt-4">
+    <h6 class="fw-semibold mb-2">
+      LLM Steps
+      <span id="steps-count" class="badge bg-secondary ms-1"></span>
+    </h6>
+    <div id="steps-accordion" class="accordion mb-4"></div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Holdings ──────────────────────────────────────────────────
+let holdingIdx = 0;
+
+function addHolding(ticker='', qty='', price='') {
+  const idx = holdingIdx++;
+  const tbody = document.getElementById('holdings-body');
+  const tr = document.createElement('tr');
+  tr.id = 'holding-row-' + idx;
+  tr.innerHTML = `
+    <td><input type="text" class="form-control form-control-sm h-ticker" placeholder="TSLA" value="${ticker}" style="min-width:80px"></td>
+    <td><input type="number" class="form-control form-control-sm h-qty" placeholder="10" value="${qty}" min="0.0001" step="any" style="min-width:80px"></td>
+    <td><input type="number" class="form-control form-control-sm h-price" placeholder="200" value="${price}" min="0.0001" step="any" style="min-width:90px"></td>
+    <td><button class="btn btn-sm btn-outline-danger" onclick="removeHolding(${idx})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  syncHoldingsUI();
+}
+
+function removeHolding(idx) {
+  document.getElementById('holding-row-' + idx)?.remove();
+  syncHoldingsUI();
+}
+
+function syncHoldingsUI() {
+  const rows = document.querySelectorAll('#holdings-body tr');
+  document.getElementById('no-holdings').classList.toggle('d-none', rows.length > 0);
+}
+
+function getHoldings() {
+  return [...document.querySelectorAll('#holdings-body tr')].map(tr => ({
+    ticker: tr.querySelector('.h-ticker').value.trim().toUpperCase(),
+    qty:    tr.querySelector('.h-qty').value.trim(),
+    price:  tr.querySelector('.h-price').value.trim(),
+  })).filter(h => h.ticker && h.qty && h.price);
+}
+
+// ── Watchlist ─────────────────────────────────────────────────
+let watchlist = [];
+
+function addWatch() {
+  const inp = document.getElementById('inp-watch');
+  const ticker = inp.value.trim().toUpperCase();
+  if (!ticker || watchlist.includes(ticker)) { inp.value=''; return; }
+  watchlist.push(ticker);
+  inp.value = '';
+  renderWatchlist();
+}
+
+function removeWatch(ticker) {
+  watchlist = watchlist.filter(t => t !== ticker);
+  renderWatchlist();
+}
+
+function renderWatchlist() {
+  const container = document.getElementById('watchlist-tags');
+  container.innerHTML = watchlist.map(t =>
+    `<span class="badge bg-primary d-flex align-items-center gap-1" style="font-size:.85rem">
+      ${t}
+      <button type="button" class="btn-close btn-close-white" style="font-size:.6rem" onclick="removeWatch('${t}')"></button>
+    </span>`
+  ).join('');
+}
+
+// ── Build prompt ──────────────────────────────────────────────
+function buildPrompt() {
+  const name   = document.getElementById('inp-name').value.trim() || 'User';
+  const risk   = document.getElementById('inp-risk').value;
+  const budget = document.getElementById('inp-budget').value.trim() || '10000';
+  const holdings = getHoldings();
+  let parts = [`My name is ${name}.`];
+  if (holdings.length)
+    parts.push('I hold ' + holdings.map(h => `${h.qty} ${h.ticker} at $${h.price}`).join(', ') + '.');
+  if (watchlist.length)
+    parts.push('I watch ' + watchlist.join(', ') + '.');
+  parts.push(`${risk} risk. $${budget} budget.`);
+  return parts.join(' ');
+}
+
+// ── Run ───────────────────────────────────────────────────────
+async function runAnalysis() {
+  const btn     = document.getElementById('run-btn');
+  const spinner = document.getElementById('loading-state');
+  btn.classList.add('d-none');
+  spinner.classList.remove('d-none');
+
+  document.getElementById('results-section').classList.remove('d-none');
+  document.getElementById('error-box').classList.add('d-none');
+  document.getElementById('notif-feed').innerHTML = '';
+  document.getElementById('steps-box').classList.add('d-none');
+
+  const prompt = buildPrompt();
+  const model  = document.getElementById('inp-model').value;
+
+  try {
+    const res  = await fetch('/api/execute', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({prompt, model}),
+    });
+    const data = await res.json();
+
+    if (data.status === 'error') {
+      const eb = document.getElementById('error-box');
+      eb.textContent = data.error;
+      eb.classList.remove('d-none');
+    } else {
+      renderNotifications(data.response || '');
+      if (data.steps && data.steps.length) {
+        renderSteps(data.steps);
+        document.getElementById('steps-box').classList.remove('d-none');
+      }
+    }
+  } catch(e) {
+    const eb = document.getElementById('error-box');
+    eb.textContent = 'Request failed: ' + e.message;
+    eb.classList.remove('d-none');
+  } finally {
+    btn.classList.remove('d-none');
+    spinner.classList.add('d-none');
+    document.getElementById('results-section').scrollIntoView({behavior:'smooth'});
+  }
+}
+
+// ── Parse + render notifications ──────────────────────────────
+function renderNotifications(responseText) {
+  const feed = document.getElementById('notif-feed');
+  if (!responseText.trim()) {
+    feed.innerHTML = '<p class="text-muted text-center py-3">No alerts generated.</p>';
+    return;
+  }
+
+  // Split on "[LEVEL]" boundaries
+  const chunks = responseText.split(/(?=\[(ACTION|WARNING|INFO)\])/);
+  let html = '';
+  let idx = 0;
+
+  for (const chunk of chunks) {
+    const trimmed = chunk.trim();
+    if (!trimmed) continue;
+
+    // Try to parse: [LEVEL] [AGENT] [TICKER] RECOMMENDATION:\nreasoning...
+    const m = trimmed.match(/^\[(\w+)\]\s+\[(\w+)\]\s+\[([^\]]+)\]\s+(\w+)[:\s]/);
+    if (!m) {
+      // Plain text (e.g. "Skipped invalid tickers: ...")
+      html += `<div class="alert alert-secondary">${escHtml(trimmed)}</div>`;
+      continue;
+    }
+
+    idx++;
+    const [, level, agent, ticker, rec] = m;
+    const afterHeader = trimmed.slice(m[0].length).trim();
+
+    // Strip metadata lines from reasoning
+    const reasoning = afterHeader
+      .replace(/\|\s*Historical:.*$/ms, '')
+      .replace(/\|\s*News analyzed:.*$/m, '')
+      .replace(/\|\s*Confidence:.*$/m, '')
+      .replace(/\|\s*Momentum:.*$/m, '')
+      .trim();
+
+    // Extract metadata
+    const newsM  = afterHeader.match(/\|\s*News analyzed:\s*(\d+)/);
+    const confM  = afterHeader.match(/\|\s*Confidence:\s*(\w+)/);
+    const momM   = afterHeader.match(/\|\s*Momentum:\s*([\d.%-]+)/);
+
+    const levelBadge = level === 'ACTION'
+      ? 'bg-danger' : level === 'WARNING'
+      ? 'bg-warning text-dark' : 'bg-info text-dark';
+
+    html += `
+    <div class="notif-card notif-${level}">
+      <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+        <span class="agent-icon">${agent === 'Guardian' ? '🛡' : '🔭'}</span>
+        <span class="fw-semibold">${agent}</span>
+        <span class="ticker-badge">${ticker}</span>
+        <span class="badge ${levelBadge}">${level}</span>
+        <span class="rec-badge rec-${rec}">${rec}</span>
+        ${newsM ? `<span class="text-muted small">📰 ${newsM[1]} news</span>` : ''}
+        ${confM ? `<span class="text-muted small">🎯 ${confM[1]} confidence</span>` : ''}
+        ${momM  ? `<span class="text-muted small">📈 ${momM[1]}</span>` : ''}
+      </div>
+      <div class="reasoning-preview text-muted small" id="a-preview-${idx}"></div>
+      <div class="reasoning-full d-none" id="a-full-${idx}"></div>
+      <template id="a-raw-${idx}">${escHtml(reasoning)}</template>
+      <button class="toggle-btn mt-2" onclick="toggleReasoning(${idx})">Show full analysis ▼</button>
+    </div>`;
+  }
+
+  feed.innerHTML = html;
+
+  // Render markdown for each card
+  feed.querySelectorAll('.reasoning-full').forEach(el => {
+    const id  = el.id.replace('a-full-', '');
+    const raw = document.getElementById('a-raw-' + id).innerHTML
+                  .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+    el.innerHTML = marked.parse(raw);
+    const plain = raw.replace(/[#*_`>|\[\]\-]/g,'').replace(/\s+/g,' ').trim();
+    document.getElementById('a-preview-' + id).textContent =
+      plain.substring(0, 140) + (plain.length > 140 ? '…' : '');
+  });
+}
+
+function toggleReasoning(idx) {
+  const preview = document.getElementById('a-preview-' + idx);
+  const full    = document.getElementById('a-full-' + idx);
+  const btn     = full.nextElementSibling;
+  const isOpen  = !full.classList.contains('d-none');
+  full.classList.toggle('d-none', isOpen);
+  preview.classList.toggle('d-none', !isOpen);
+  btn.textContent = isOpen ? 'Show full analysis ▼' : 'Hide analysis ▲';
+}
+
+// ── Steps accordion ───────────────────────────────────────────
+function renderSteps(steps) {
+  document.getElementById('steps-count').textContent = steps.length;
+  const acc = document.getElementById('steps-accordion');
+  acc.innerHTML = steps.map((step, i) => `
+    <div class="accordion-item">
+      <h2 class="accordion-header">
+        <button class="accordion-button collapsed py-2" type="button"
+                data-bs-toggle="collapse" data-bs-target="#step-${i}">
+          <span class="badge bg-dark me-2">${i+1}</span>
+          <span class="fw-semibold">${step.module}</span>
+        </button>
+      </h2>
+      <div id="step-${i}" class="accordion-collapse collapse">
+        <div class="accordion-body p-2">
+          <p class="small text-muted mb-1 fw-semibold">PROMPT</p>
+          <pre class="bg-light p-2 rounded small" style="max-height:200px;overflow:auto">${escHtml(JSON.stringify(step.prompt,null,2))}</pre>
+          <p class="small text-muted mb-1 fw-semibold mt-2">RESPONSE</p>
+          <pre class="bg-light p-2 rounded small" style="max-height:200px;overflow:auto">${escHtml(JSON.stringify(step.response,null,2))}</pre>
+        </div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+{% endblock %}

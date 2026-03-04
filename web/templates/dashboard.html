@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}— Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Summary bar -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="summary-card">
+      <div class="summary-value">{{ holdings_count }}</div>
+      <div class="summary-label">Holdings</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="summary-card">
+      <div class="summary-value">{{ watchlist_count }}</div>
+      <div class="summary-label">Watching</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="summary-card">
+      <div class="summary-value">${{ "{:,.0f}".format(budget) }}</div>
+      <div class="summary-label">Budget</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="summary-card">
+      <div class="summary-value">{{ last_run[11:16] if last_run else "—" }}</div>
+      <div class="summary-label">Last Run</div>
+    </div>
+  </div>
+</div>
+
+<!-- Run button -->
+<div class="mb-4">
+  <form method="POST" action="/run" id="run-form" class="d-flex align-items-center gap-3 flex-wrap">
+    <select name="model" class="form-select w-auto">
+      {% for model_id, model_name in available_models.items() %}
+        <option value="{{ model_id }}" {{ "selected" if model_id == "claude-sonnet-4-6" }}>{{ model_name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary btn-lg px-5" id="run-btn">
+      ▶&nbsp; Run Analysis
+    </button>
+  </form>
+  <div id="loading-state" class="d-none mt-3 text-center">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2 text-muted">FINERIS is analyzing your portfolio — this may take ~30s…</p>
+  </div>
+</div>
+
+<!-- Notifications feed -->
+{% if grouped %}
+  {% set ns = namespace(i=0) %}
+  {% for date, items in grouped %}
+    <p class="text-muted small fw-semibold mt-4 mb-2 text-uppercase">{{ date }}</p>
+    {% for n in items %}
+      {% set ns.i = ns.i + 1 %}
+      {% set is_action = n.level == "ACTION" %}
+      {% set is_warning = n.level == "WARNING" %}
+      <div class="notif-card notif-{{ n.level }}">
+
+        <!-- Header row -->
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+          <span class="agent-icon">{{ "🛡" if n.agent == "Guardian" else "🔭" }}</span>
+          <span class="fw-semibold">{{ n.agent }}</span>
+          <span class="ticker-badge">{{ n.ticker }}</span>
+          <span class="badge {{ 'bg-danger' if is_action else ('bg-warning text-dark' if is_warning else 'bg-info text-dark') }}">
+            {{ n.level }}
+          </span>
+          <span class="rec-badge rec-{{ n.recommendation }}">{{ n.recommendation }}</span>
+          {% if n.news_count is not none %}<span class="text-muted small">📰 {{ n.news_count }} news</span>{% endif %}
+          {% if n.confidence %}<span class="text-muted small">🎯 {{ n.confidence }} confidence</span>{% endif %}
+          <span class="ms-auto text-muted small">{{ n.time }}</span>
+        </div>
+
+        <!-- Reasoning (collapsed) — stored in <template> to preserve newlines -->
+        <div class="reasoning-preview text-muted small" id="preview-{{ ns.i }}"></div>
+        <div class="reasoning-full d-none" id="full-{{ ns.i }}"></div>
+        <template id="raw-{{ ns.i }}">{{ n.reasoning }}</template>
+        <button class="toggle-btn mt-2" onclick="toggleReasoning({{ ns.i }})">
+          Show full analysis ▼
+        </button>
+
+      </div>
+    {% endfor %}
+  {% endfor %}
+{% else %}
+  <div class="text-center text-muted py-5">
+    <p class="fs-5">No notifications yet.</p>
+    <p>Click <strong>Run Analysis</strong> to start monitoring your portfolio.</p>
+  </div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Loading spinner
+document.getElementById('run-form').addEventListener('submit', function () {
+  document.getElementById('run-btn').classList.add('d-none');
+  document.getElementById('loading-state').classList.remove('d-none');
+});
+
+// Render previews from raw markdown stored in <template> tags
+document.querySelectorAll('.reasoning-full').forEach(function (el) {
+  const id  = el.id.replace('full-', '');
+  const raw = document.getElementById('raw-' + id).innerHTML;
+  el.innerHTML = marked.parse(raw);
+
+  const preview = el.previousElementSibling;
+  const plain   = raw.replace(/[#*_`>|\[\]\-]/g, '').replace(/\s+/g, ' ').trim();
+  preview.textContent = plain.substring(0, 140) + (plain.length > 140 ? '…' : '');
+});
+
+function toggleReasoning(idx) {
+  const preview = document.getElementById('preview-' + idx);
+  const full    = document.getElementById('full-' + idx);
+  const btn     = full.nextElementSibling;
+  const isOpen  = !full.classList.contains('d-none');
+
+  if (isOpen) {
+    full.classList.add('d-none');
+    preview.classList.remove('d-none');
+    btn.textContent = 'Show full analysis ▼';
+  } else {
+    full.classList.remove('d-none');
+    preview.classList.add('d-none');
+    btn.textContent = 'Hide analysis ▲';
+  }
+}
+</script>
+{% endblock %}
