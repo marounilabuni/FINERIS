@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 
 import yfinance as yf
@@ -6,19 +7,42 @@ from data.base import BaseDataSource
 from models.market import NewsItem, StockSnapshot
 
 
+def _yf_ticker(ticker: str) -> yf.Ticker:
+    """Return a yfinance Ticker with a browser-like User-Agent to reduce rate limiting."""
+    t = yf.Ticker(ticker)
+    try:
+        t.session.headers.update({  # type: ignore[union-attr]
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            )
+        })
+    except Exception:
+        pass
+    return t
+
+
+def _with_retry(fn, retries: int = 3, delay: float = 2.0):
+    """Call fn(), retrying up to `retries` times on rate-limit errors."""
+    for attempt in range(retries):
+        try:
+            return fn()
+        except Exception as e:
+            if attempt < retries - 1 and "too many requests" in str(e).lower():
+                time.sleep(delay * (attempt + 1))
+            else:
+                raise
+
+
 class YFinanceSource(BaseDataSource):
 
     def resolve_ticker(self, raw: str) -> str:
-        """Resolve user input to a valid yfinance ticker.
-        Tries {raw}-USD first (crypto), then raw as-is (stocks).
-        Returns the resolved ticker or raises ValueError.
-        """
         upper = raw.upper()
-        # Try crypto form first to avoid BTC resolving to an unrelated stock
         candidates = [f"{upper}-USD", upper] if "-" not in upper else [upper]
         for candidate in candidates:
             try:
-                df = yf.Ticker(candidate).history(period="2d")
+                df = _with_retry(lambda c=candidate: _yf_ticker(c).history(period="2d"))
                 if not df.empty:
                     return candidate
             except Exception:
@@ -26,13 +50,13 @@ class YFinanceSource(BaseDataSource):
         raise ValueError(f"Ticker '{upper}' not found. Please check the symbol.")
 
     def get_price(self, ticker: str) -> float:
-        df = yf.Ticker(ticker).history(period="2d")
+        df = _with_retry(lambda: _yf_ticker(ticker).history(period="2d"))
         if df.empty:
             return 0.0
         return float(df["Close"].iloc[-1])
 
     def get_snapshot(self, ticker: str) -> StockSnapshot:
-        df = yf.Ticker(ticker).history(period="2d")
+        df = _with_retry(lambda: _yf_ticker(ticker).history(period="2d"))
         if df.empty:
             raise ValueError(f"No price data available for {ticker}")
         current_price = float(df["Close"].iloc[-1])
@@ -48,7 +72,7 @@ class YFinanceSource(BaseDataSource):
         )
 
     def get_news(self, ticker: str) -> list[NewsItem]:
-        raw_news = yf.Ticker(ticker).news or []
+        raw_news = _with_retry(lambda: _yf_ticker(ticker).news) or []
         items = []
         for item in raw_news:
             content = item.get("content", {})
@@ -67,12 +91,12 @@ class YFinanceSource(BaseDataSource):
                     headline=title,
                     summary=summary,
                     published_at=published_at,
-                    url=news_id or url,  # prefer id for deduplication
+                    url=news_id or url,
                 ))
         return items
 
     def get_history(self, ticker: str, period: str = "30d") -> list[dict]:
-        df = yf.Ticker(ticker).history(period=period)
+        df = _with_retry(lambda: _yf_ticker(ticker).history(period=period))
         if df.empty:
             return []
         df = df.reset_index()
@@ -89,7 +113,7 @@ class YFinanceSource(BaseDataSource):
         ]
 
     def get_fundamentals(self, ticker: str) -> dict:
-        info = yf.Ticker(ticker).info
+        info = _with_retry(lambda: _yf_ticker(ticker).info)
         return {
             "pe_ratio": info.get("trailingPE"),
             "market_cap": info.get("marketCap"),
