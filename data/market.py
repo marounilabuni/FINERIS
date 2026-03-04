@@ -39,14 +39,12 @@ class YFinanceSource(BaseDataSource):
 
     def resolve_ticker(self, raw: str) -> str:
         upper = raw.upper()
-        candidates = [f"{upper}-USD", upper] if "-" not in upper else [upper]
-        for candidate in candidates:
-            try:
-                df = _with_retry(lambda c=candidate: _yf_ticker(c).history(period="2d"))
-                if not df.empty:
-                    return candidate
-            except Exception:
-                continue
+        try:
+            df = _with_retry(lambda: _yf_ticker(upper).history(period="2d"))
+            if not df.empty:
+                return upper
+        except Exception:
+            pass
         raise ValueError(f"Ticker '{upper}' not found. Please check the symbol.")
 
     def get_price(self, ticker: str) -> float:
