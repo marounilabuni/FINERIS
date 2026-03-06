@@ -194,6 +194,18 @@ def register_routes(app: Flask) -> None:
 
     # ── API ──────────────────────────────────────────────────────────────────
 
+    @app.route("/api/team_info", methods=["GET"])
+    def api_team_info():
+        return jsonify({
+            "group_batch_order_number": "Batch 2, Order 7",
+            "team_name": "יוסרא פחאמנה + אלעד פולק + מארון עילבוני",
+            "students": [
+                {"name": "Yosra Fhamne",     "email": "soso7492@campus.technion.ac.il"},
+                {"name": "Elad Elie Pollak",  "email": "eladpollak@campus.technion.ac.il"},
+                {"name": "Maroun Ilabuni",    "email": "marounila@campus.technion.ac.il"},
+            ],
+        })
+
     @app.route("/api/agent_info", methods=["GET"])
     def api_agent_info():
         return jsonify({
