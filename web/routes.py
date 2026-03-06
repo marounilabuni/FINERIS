@@ -1,6 +1,6 @@
 import re
 
-from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, request, send_file, url_for
 
 from agents.prompt_parser import PromptParser
 from config import Config
@@ -193,6 +193,11 @@ def register_routes(app: Flask) -> None:
         return redirect(url_for("profile"))
 
     # ── API ──────────────────────────────────────────────────────────────────
+
+    @app.route("/api/model_architecture", methods=["GET"])
+    def api_model_architecture():
+        path = Config.BASE_DIR / "web" / "static" / "architecture.png"
+        return send_file(path, mimetype="image/png")
 
     @app.route("/api/team_info", methods=["GET"])
     def api_team_info():
