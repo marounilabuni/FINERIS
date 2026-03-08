@@ -335,8 +335,8 @@ function renderNotifications(responseText) {
     return;
   }
 
-  // Split on "[LEVEL]" boundaries
-  const chunks = responseText.split(/(?=\[(ACTION|WARNING|INFO)\])/);
+  // Split on notification boundaries: [LEVEL] [Guardian|Scout] [TICKER]
+  const chunks = responseText.split(/(?:^|\n)(?=\[(ACTION|WARNING|INFO)\] \[(?:Guardian|Scout)\] \[)/);
   let html = '';
   let idx = 0;
 
