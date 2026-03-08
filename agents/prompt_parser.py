@@ -35,7 +35,7 @@ class PromptParser:
             temperature=Config.TEMPERATURE,
             base_url=Config.LLMOD_BASE_URL,
             api_key=Config.LLMOD_API_KEY,
-        ).with_structured_output(ParsedPrompt)
+        ).with_structured_output(ParsedPrompt).with_retry(stop_after_attempt=3)
 
     def parse(self, prompt: str) -> ParsedPrompt:
         msg = (

@@ -32,7 +32,7 @@ class SupervisorAgent(BaseAgent):
             temperature=Config.TEMPERATURE,
             base_url=Config.LLMOD_BASE_URL,
             api_key=Config.LLMOD_API_KEY,
-        ).with_structured_output(_SentimentResponse)
+        ).with_structured_output(_SentimentResponse).with_retry(stop_after_attempt=3)
 
     def classify_news_sentiments(self, news_items: list) -> list[Literal["POSITIVE", "NEGATIVE", "NEUTRAL", "MIXED"]]:
         """One LLM call for all items. Returns POSITIVE/NEGATIVE/NEUTRAL per item."""

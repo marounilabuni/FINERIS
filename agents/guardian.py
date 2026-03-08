@@ -27,7 +27,7 @@ class GuardianAgent(BaseAgent):
             temperature=Config.TEMPERATURE,
             base_url=Config.LLMOD_BASE_URL,
             api_key=Config.LLMOD_API_KEY,
-        ).with_structured_output(_GuardianResponse)
+        ).with_structured_output(_GuardianResponse).with_retry(stop_after_attempt=3)
 
     def run(
         self,
