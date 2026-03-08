@@ -4,7 +4,30 @@
 {% block content %}
 <h4 class="mb-4 fw-bold">Run Analysis</h4>
 
+<!-- ── Mode Toggle ─────────────────────────────────────────── -->
+<ul class="nav nav-tabs mb-4" id="modeTab">
+  <li class="nav-item">
+    <button class="nav-link active" id="tab-structured" onclick="switchMode('structured')">Structured Form</button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" id="tab-freetext" onclick="switchMode('freetext')">Free Text Prompt</button>
+  </li>
+</ul>
+
+<!-- ── Free Text Mode ──────────────────────────────────────── -->
+<div id="freetext-section" class="d-none mb-4">
+  <div class="card">
+    <div class="card-header fw-semibold">Enter your prompt</div>
+    <div class="card-body">
+      <textarea id="inp-freetext" class="form-control" rows="5"
+        placeholder="e.g. I hold 10 AAPL bought at $150 and 5 TSLA at $200. I want to watch NVDA and MSFT. Medium risk, $8000 budget. What should I do?"></textarea>
+      <div class="form-text text-muted mt-1">Describe your holdings, watchlist, risk level and budget in plain English.</div>
+    </div>
+  </div>
+</div>
+
 <!-- ── Profile ─────────────────────────────────────────────── -->
+<div id="structured-section">
 <div class="card mb-3">
   <div class="card-header fw-semibold">Investor Profile</div>
   <div class="card-body">
@@ -63,6 +86,7 @@
     <div id="watchlist-tags" class="d-flex flex-wrap gap-2"></div>
   </div>
 </div>
+</div>{# end structured-section #}
 
 <!-- ── Run ─────────────────────────────────────────────────── -->
 <div class="d-flex align-items-center gap-3 flex-wrap mb-4">
@@ -165,8 +189,22 @@ function renderWatchlist() {
   ).join('');
 }
 
+// ── Mode switch ───────────────────────────────────────────────
+let currentMode = 'structured';
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('structured-section').classList.toggle('d-none', mode !== 'structured');
+  document.getElementById('freetext-section').classList.toggle('d-none', mode !== 'freetext');
+  document.getElementById('tab-structured').classList.toggle('active', mode === 'structured');
+  document.getElementById('tab-freetext').classList.toggle('active', mode === 'freetext');
+}
+
 // ── Build prompt ──────────────────────────────────────────────
 function buildPrompt() {
+  if (currentMode === 'freetext') {
+    return document.getElementById('inp-freetext').value.trim();
+  }
   const name   = document.getElementById('inp-name').value.trim() || 'User';
   const risk   = document.getElementById('inp-risk').value;
   const budget = document.getElementById('inp-budget').value.trim() || '10000';
@@ -193,6 +231,15 @@ async function runAnalysis() {
   document.getElementById('steps-box').classList.add('d-none');
 
   const prompt = buildPrompt();
+  if (!prompt) {
+    const eb = document.getElementById('error-box');
+    eb.textContent = 'Please enter a prompt or fill in the form.';
+    eb.classList.remove('d-none');
+    document.getElementById('results-section').classList.remove('d-none');
+    btn.classList.remove('d-none');
+    spinner.classList.add('d-none');
+    return;
+  }
   const model  = document.getElementById('inp-model').value;
 
   try {

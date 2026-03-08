@@ -20,6 +20,10 @@ class ParsedPrompt(BaseModel):
     budget: float = 10000.0
     holdings: list[_HoldingInput] = Field(default_factory=list)
     watchlist: list[str] = Field(default_factory=list)
+    is_financial: bool = Field(
+        default=True,
+        description="False if the prompt is clearly unrelated to finance, investing, stocks, or portfolio management.",
+    )
 
 
 class PromptParser:
@@ -40,7 +44,9 @@ class PromptParser:
             "holdings=[], watchlist=[]\n"
             "risk_level must be exactly one of: low, medium, high\n"
             "For each holding extract: ticker symbol, quantity, avg_buy_price.\n"
-            "Watchlist is a list of ticker symbols the user wants to monitor but does not hold.\n\n"
+            "Watchlist is a list of ticker symbols the user wants to monitor but does not hold.\n"
+            "Set is_financial=false if the message is clearly unrelated to finance, stocks, investing, or portfolio management "
+            "(e.g. jokes, recipes, general questions). Otherwise set is_financial=true.\n\n"
             f"User message: {prompt}"
         )
         result = self._llm.invoke([HumanMessage(content=msg)])  # type: ignore[return-value]

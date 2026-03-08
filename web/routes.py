@@ -203,7 +203,7 @@ def register_routes(app: Flask) -> None:
     def api_team_info():
         return jsonify({
             "group_batch_order_number": "Batch 2, Order 7",
-            "team_name": "יוסרא פחאמנה + אלעד פולק + מארון עילבוני",
+            "team_name": "FINERIS Team",
             "students": [
                 {"name": "Yosra Fhamne",     "email": "soso7492@campus.technion.ac.il"},
                 {"name": "Elad Elie Pollak",  "email": "eladpollak@campus.technion.ac.il"},
@@ -216,9 +216,8 @@ def register_routes(app: Flask) -> None:
         return jsonify({
             "description": (
                 "FINERIS is a multi-agent autonomous portfolio management system. "
-                "It consists of three specialized LLM agents — PromptParser (Haiku), "
-                "Supervisor (Sonnet), Guardian (Sonnet), and Scout (Sonnet) — "
-                "orchestrated via a LangGraph state machine."
+                "It consists of four specialized LLM agents — PromptParser, Supervisor, Guardian, and Scout — "
+                "orchestrated via a LangGraph state machine, powered by LLMod AI."
             ),
             "purpose": (
                 "Given a natural-language investor prompt, FINERIS parses the portfolio, "
@@ -227,15 +226,17 @@ def register_routes(app: Flask) -> None:
                 "and scans watchlist candidates (Scout: BUY/PASS), "
                 "returning actionable investment alerts."
             ),
-            "prompt_template": (
-                "Extract investor portfolio and profile information from the user message.\n"
-                "Defaults when not mentioned: name='User', risk_level='medium', budget=10000.0, "
-                "holdings=[], watchlist=[]\n"
-                "risk_level must be exactly one of: low, medium, high\n"
-                "For each holding extract: ticker symbol, quantity, avg_buy_price.\n"
-                "Watchlist is a list of ticker symbols the user wants to monitor but does not hold.\n\n"
-                "User message: {prompt}"
-            ),
+            "prompt_template": {
+                "template": (
+                    "Extract investor portfolio and profile information from the user message.\n"
+                    "Defaults when not mentioned: name='User', risk_level='medium', budget=10000.0, "
+                    "holdings=[], watchlist=[]\n"
+                    "risk_level must be exactly one of: low, medium, high\n"
+                    "For each holding extract: ticker symbol, quantity, avg_buy_price.\n"
+                    "Watchlist is a list of ticker symbols the user wants to monitor but does not hold.\n\n"
+                    "User message: {prompt}"
+                )
+            },
             "prompt_examples": [
                 {
                     "prompt": "I hold 10 TSLA at $200, watch NVDA, medium risk, $5000 budget",
@@ -319,6 +320,15 @@ def register_routes(app: Flask) -> None:
             parsed = PromptParser().parse(prompt)
         except Exception as e:
             return jsonify({"status": "error", "error": f"Parsing failed: {e}", "response": "", "steps": []}), 500
+
+        # 2b. Reject non-financial prompts
+        if not parsed.is_financial:
+            return jsonify({
+                "status": "error",
+                "error": "This agent only handles finance and investment-related prompts. Please describe your portfolio, holdings, watchlist, or ask about stocks.",
+                "response": None,
+                "steps": get_steps(),
+            }), 400
 
         # 3. Validate tickers (holdings + watchlist)
         market = YFinanceSource()
