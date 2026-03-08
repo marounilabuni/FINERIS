@@ -73,7 +73,10 @@ class YFinanceSource(BaseDataSource):
         )
 
     def get_news(self, ticker: str) -> list[NewsItem]:
-        raw_news = _with_retry(lambda: _yf_ticker(ticker).news) or []
+        try:
+            raw_news = _with_retry(lambda: _yf_ticker(ticker).news) or []
+        except Exception:
+            return []
         items = []
         for item in raw_news:
             content = item.get("content", {})
@@ -114,7 +117,10 @@ class YFinanceSource(BaseDataSource):
         ]
 
     def get_fundamentals(self, ticker: str) -> dict:
-        info = _with_retry(lambda: _yf_ticker(ticker).info)
+        try:
+            info = _with_retry(lambda: _yf_ticker(ticker).info)
+        except Exception:
+            return {"pe_ratio": None, "market_cap": None, "earnings_growth": None, "revenue_growth": None, "sector": None}
         return {
             "pe_ratio": info.get("trailingPE"),
             "market_cap": info.get("marketCap"),
