@@ -1,5 +1,6 @@
 import json
 import operator
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextvars import copy_context
 from datetime import datetime, timedelta
@@ -212,7 +213,9 @@ class FinerisSystem:
 
         # --- Scout: sequential over watchlist ---
         weights = {s.ticker: s.portfolio_weight for s in state["portfolio_snapshot"]}
-        for ticker in profile.watchlist:
+        for i, ticker in enumerate(profile.watchlist):
+            if i > 0:
+                time.sleep(2)  # avoid Yahoo Finance rate limiting between tickers
             try:
                 signal = self._scout_system.run(
                     ticker=ticker,

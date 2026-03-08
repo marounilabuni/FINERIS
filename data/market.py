@@ -23,13 +23,15 @@ def _yf_ticker(ticker: str) -> yf.Ticker:
     return t
 
 
-def _with_retry(fn, retries: int = 3, delay: float = 2.0):
+def _with_retry(fn, retries: int = 5, delay: float = 5.0):
     """Call fn(), retrying up to `retries` times on rate-limit errors."""
     for attempt in range(retries):
         try:
             return fn()
         except Exception as e:
-            if attempt < retries - 1 and "too many requests" in str(e).lower():
+            msg = str(e).lower()
+            is_rate_limit = "too many requests" in msg or "rate limit" in msg or "429" in msg
+            if attempt < retries - 1 and is_rate_limit:
                 time.sleep(delay * (attempt + 1))
             else:
                 raise
