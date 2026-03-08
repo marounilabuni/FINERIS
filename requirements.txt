@@ -1,4 +1,4 @@
-langchain-anthropic
+langchain-openai
 langgraph
 yfinance>=1.2.0
 pydantic
