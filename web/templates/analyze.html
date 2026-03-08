@@ -259,6 +259,32 @@ async function runAnalysis() {
   document.getElementById('notif-feed').innerHTML = '';
   document.getElementById('steps-box').classList.add('d-none');
 
+  // ── Structured mode validation ────────────────────────────
+  if (currentMode === 'structured') {
+    const holdings = getHoldings();
+    const tickers = holdings.map(h => h.ticker).filter(t => t);
+    const dupHolding = tickers.find((t, i) => tickers.indexOf(t) !== i);
+    if (dupHolding) {
+      const eb = document.getElementById('error-box');
+      eb.textContent = `Duplicate holding: "${dupHolding}" appears more than once. Please remove the duplicate.`;
+      eb.classList.remove('d-none');
+      document.getElementById('results-section').classList.remove('d-none');
+      btn.classList.remove('d-none');
+      spinner.classList.add('d-none');
+      return;
+    }
+    const dupWatch = watchlist.find((t, i) => watchlist.indexOf(t) !== i);
+    if (dupWatch) {
+      const eb = document.getElementById('error-box');
+      eb.textContent = `Duplicate watchlist ticker: "${dupWatch}". Please remove the duplicate.`;
+      eb.classList.remove('d-none');
+      document.getElementById('results-section').classList.remove('d-none');
+      btn.classList.remove('d-none');
+      spinner.classList.add('d-none');
+      return;
+    }
+  }
+
   const prompt = buildPrompt();
   if (!prompt) {
     const eb = document.getElementById('error-box');
