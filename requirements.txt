@@ -1,7 +1,9 @@
-langchain-openai
-langgraph
+openai>=2.6.0
+langchain-openai>=0.3.0
+langchain-core>=0.3.0
+langgraph>=0.3.0
 yfinance>=1.2.0
-pydantic
-python-dotenv
-flask
-typing-extensions
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+flask>=2.3.0
+typing-extensions>=4.0.0
