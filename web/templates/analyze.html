@@ -17,7 +17,25 @@
 <!-- ── Free Text Mode ──────────────────────────────────────── -->
 <div id="freetext-section" class="d-none mb-4">
   <div class="card">
-    <div class="card-header fw-semibold">Enter your prompt</div>
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+      Enter your prompt
+      <div class="dropdown">
+        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          Try an example
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" style="max-width:340px">
+          <li><a class="dropdown-item text-wrap small" href="#" onclick="fillExample(0);return false;">
+            📈 Growth investor with tech holdings
+          </a></li>
+          <li><a class="dropdown-item text-wrap small" href="#" onclick="fillExample(1);return false;">
+            🛡 Conservative investor watching blue chips
+          </a></li>
+          <li><a class="dropdown-item text-wrap small" href="#" onclick="fillExample(2);return false;">
+            💰 High-risk investor, crypto + growth stocks
+          </a></li>
+        </ul>
+      </div>
+    </div>
     <div class="card-body">
       <textarea id="inp-freetext" class="form-control" rows="5"
         placeholder="e.g. I hold 10 AAPL bought at $150 and 5 TSLA at $200. I want to watch NVDA and MSFT. Medium risk, $8000 budget. What should I do?"></textarea>
@@ -187,6 +205,17 @@ function renderWatchlist() {
       <button type="button" class="btn-close btn-close-white" style="font-size:.6rem" onclick="removeWatch('${t}')"></button>
     </span>`
   ).join('');
+}
+
+// ── Example prompts ───────────────────────────────────────────
+const EXAMPLES = [
+  "I hold 10 AAPL at $150 and 5 NVDA at $400. I also want to watch MSFT and GOOGL. Medium risk investor with a $15000 budget.",
+  "I have 20 JNJ at $140 and 10 KO at $60. I want to monitor PG and WMT. I am a conservative, low-risk investor with $8000 available.",
+  "I hold 8 TSLA at $200 and 3 COIN at $180. Watching AMD and PLTR. High risk, $20000 budget. What should I do?",
+];
+
+function fillExample(idx) {
+  document.getElementById('inp-freetext').value = EXAMPLES[idx];
 }
 
 // ── Mode switch ───────────────────────────────────────────────
