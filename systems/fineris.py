@@ -215,7 +215,7 @@ class FinerisSystem:
         weights = {s.ticker: s.portfolio_weight for s in state["portfolio_snapshot"]}
         for i, ticker in enumerate(profile.watchlist):
             if i > 0:
-                time.sleep(2)  # avoid Yahoo Finance rate limiting between tickers
+                time.sleep(5)  # avoid Yahoo Finance rate limiting between tickers
             try:
                 signal = self._scout_system.run(
                     ticker=ticker,

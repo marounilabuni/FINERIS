@@ -23,8 +23,9 @@ def _yf_ticker(ticker: str) -> yf.Ticker:
     return t
 
 
-def _with_retry(fn, retries: int = 5, delay: float = 5.0):
+def _with_retry(fn, retries: int = 5, delay: float = 10.0):
     """Call fn(), retrying up to `retries` times on rate-limit errors."""
+    time.sleep(1)  # pace all Yahoo Finance requests
     for attempt in range(retries):
         try:
             return fn()
