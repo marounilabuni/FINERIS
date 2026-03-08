@@ -304,7 +304,7 @@ def register_routes(app: Flask) -> None:
     @app.route("/api/execute", methods=["POST"])
     def api_execute():
         body = request.get_json(silent=True) or {}
-        prompt = body.get("prompt", "").strip()
+        prompt = (body.get("prompt") or "").strip()
         if not prompt:
             return jsonify({"status": "error", "error": "prompt is required", "response": "", "steps": []}), 400
 

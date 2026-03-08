@@ -7,5 +7,5 @@ RiskLevel = Literal["low", "medium", "high"]
 
 class UserProfile(BaseModel):
     name: str
-    risk_level: str  # TODO: revert to RiskLevel when done testing
+    risk_level: RiskLevel
     watchlist: list[str] = Field(default_factory=list)

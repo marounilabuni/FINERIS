@@ -1,6 +1,6 @@
 from typing import Literal
 
-from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
 
@@ -26,9 +26,11 @@ class PromptParser:
     """Uses Haiku to extract portfolio + profile from a natural language prompt."""
 
     def __init__(self) -> None:
-        self._llm = ChatAnthropic(
+        self._llm = ChatOpenAI(
             model=Config.HAIKU_MODEL,
-            temperature=0.0,
+            temperature=Config.TEMPERATURE,
+            base_url=Config.LLMOD_BASE_URL,
+            api_key=Config.LLMOD_API_KEY,
         ).with_structured_output(ParsedPrompt)
 
     def parse(self, prompt: str) -> ParsedPrompt:

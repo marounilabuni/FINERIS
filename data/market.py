@@ -50,7 +50,7 @@ class YFinanceSource(BaseDataSource):
     def get_price(self, ticker: str) -> float:
         df = _with_retry(lambda: _yf_ticker(ticker).history(period="2d"))
         if df.empty:
-            return 0.0
+            raise ValueError(f"No price data available for {ticker}")
         return float(df["Close"].iloc[-1])
 
     def get_snapshot(self, ticker: str) -> StockSnapshot:

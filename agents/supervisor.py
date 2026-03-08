@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
 
@@ -21,13 +21,17 @@ class SupervisorAgent(BaseAgent):
 
     def __init__(self, model: str = Config.MODEL) -> None:
         print(f"[SupervisorAgent] Using model: {model}")
-        self._llm = ChatAnthropic(
+        self._llm = ChatOpenAI(
             model=model,
             temperature=Config.TEMPERATURE,
+            base_url=Config.LLMOD_BASE_URL,
+            api_key=Config.LLMOD_API_KEY,
         )
-        self._sentiment_llm = ChatAnthropic(
+        self._sentiment_llm = ChatOpenAI(
             model=model,
-            temperature=0.0,
+            temperature=Config.TEMPERATURE,
+            base_url=Config.LLMOD_BASE_URL,
+            api_key=Config.LLMOD_API_KEY,
         ).with_structured_output(_SentimentResponse)
 
     def classify_news_sentiments(self, news_items: list) -> list[Literal["POSITIVE", "NEGATIVE", "NEUTRAL", "MIXED"]]:

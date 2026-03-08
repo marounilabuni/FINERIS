@@ -1,6 +1,6 @@
 from typing import Literal
 
-from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
 
@@ -21,9 +21,11 @@ class ScoutAgent(BaseAgent):
 
     def __init__(self, model: str = Config.MODEL) -> None:
         print(f"[ScoutAgent] Using model: {model}")
-        self._llm = ChatAnthropic(
+        self._llm = ChatOpenAI(
             model=model,
             temperature=Config.TEMPERATURE,
+            base_url=Config.LLMOD_BASE_URL,
+            api_key=Config.LLMOD_API_KEY,
         ).with_structured_output(_ScoutResponse)
 
     def run(

@@ -1,14 +1,24 @@
 from abc import ABC, abstractmethod
 
+from models.market import NewsItem, StockSnapshot
+
 
 class BaseDataSource(ABC):
+
+    @abstractmethod
+    def resolve_ticker(self, raw: str) -> str:
+        pass
 
     @abstractmethod
     def get_price(self, ticker: str) -> float:
         pass
 
     @abstractmethod
-    def get_news(self, ticker: str) -> list[dict]:
+    def get_snapshot(self, ticker: str) -> StockSnapshot:
+        pass
+
+    @abstractmethod
+    def get_news(self, ticker: str) -> list[NewsItem]:
         pass
 
     @abstractmethod

@@ -1,4 +1,6 @@
+import os
 from pathlib import Path
+from pydantic import SecretStr
 
 
 class Config:
@@ -11,13 +13,13 @@ class Config:
     NOTIFICATIONS_FILE = STORAGE_DIR / "notifications.log"
 
     # --- LLM ---
-    MODEL = "claude-sonnet-4-6"
-    HAIKU_MODEL = "claude-haiku-4-5-20251001"
-    TEMPERATURE = 0.2
+    MODEL = "RPRTHPB-gpt-5-mini"
+    HAIKU_MODEL = "RPRTHPB-gpt-5-mini"
+    TEMPERATURE = 1
+    LLMOD_BASE_URL = "https://api.llmod.ai/v1"
+    LLMOD_API_KEY: SecretStr = SecretStr(os.getenv("LLMOD_API_KEY", ""))
     AVAILABLE_MODELS: dict[str, str] = {
-        "claude-haiku-4-5-20251001": "Haiku 4.5 (Fast)",
-        "claude-sonnet-4-6":        "Sonnet 4.6 (Default)",
-        "claude-opus-4-6":          "Opus 4.6 (Best)",
+        "RPRTHPB-gpt-5-mini": "LLMod GPT-5 Mini",
     }
 
     # --- Guardian ---
