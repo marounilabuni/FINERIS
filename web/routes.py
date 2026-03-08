@@ -348,16 +348,14 @@ def register_routes(app: Flask) -> None:
             except ValueError:
                 invalid.append(h.ticker)
 
-        # Deduplicate holdings (keep first occurrence per ticker)
-        seen_tickers: set[str] = {h.ticker for h in holdings}
-
         watchlist: list[str] = []
+        seen_watchlist: set[str] = set()
         for t in parsed.watchlist:
             try:
                 resolved = market.resolve_ticker(t)
-                if resolved not in seen_tickers:
+                if resolved not in seen_watchlist:
                     watchlist.append(resolved)
-                    seen_tickers.add(resolved)
+                    seen_watchlist.add(resolved)
             except ValueError:
                 invalid.append(t)
 
