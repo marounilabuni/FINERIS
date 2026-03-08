@@ -334,6 +334,7 @@ def register_routes(app: Flask) -> None:
         market = YFinanceSource()
         holdings: list[Holding] = []
         invalid: list[str] = []
+        seen_holdings: set[str] = set()
 
         for h in parsed.holdings:
             if h.quantity <= 0 or h.avg_buy_price <= 0:
@@ -341,14 +342,22 @@ def register_routes(app: Flask) -> None:
                 continue
             try:
                 resolved = market.resolve_ticker(h.ticker)
-                holdings.append(Holding(ticker=resolved, quantity=h.quantity, avg_buy_price=h.avg_buy_price))
+                if resolved not in seen_holdings:
+                    holdings.append(Holding(ticker=resolved, quantity=h.quantity, avg_buy_price=h.avg_buy_price))
+                    seen_holdings.add(resolved)
             except ValueError:
                 invalid.append(h.ticker)
+
+        # Deduplicate holdings (keep first occurrence per ticker)
+        seen_tickers: set[str] = {h.ticker for h in holdings}
 
         watchlist: list[str] = []
         for t in parsed.watchlist:
             try:
-                watchlist.append(market.resolve_ticker(t))
+                resolved = market.resolve_ticker(t)
+                if resolved not in seen_tickers:
+                    watchlist.append(resolved)
+                    seen_tickers.add(resolved)
             except ValueError:
                 invalid.append(t)
 
