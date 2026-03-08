@@ -2,7 +2,6 @@ import json
 import operator
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from contextvars import copy_context
 from datetime import datetime, timedelta
 from typing import Annotated
 
@@ -202,9 +201,8 @@ class FinerisSystem:
                 errors.append(f"Guardian failed for {event.ticker}: {e}")
                 return None
 
-        ctx = copy_context()
         with ThreadPoolExecutor() as executor:
-            futures = {executor.submit(ctx.run, run_guardian, event): event for event in events_to_guard}
+            futures = {executor.submit(run_guardian, event): event for event in events_to_guard}
             for future in as_completed(futures):
                 result = future.result()
                 if result:
