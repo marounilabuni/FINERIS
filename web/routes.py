@@ -103,6 +103,10 @@ def register_routes(app: Flask) -> None:
 
     # ── Portfolio ────────────────────────────────────────────────────────────
 
+    @app.route("/about")
+    def about():
+        return render_template("about.html")
+
     @app.route("/analyze")
     def analyze():
         return render_template("analyze.html", available_models=Config.AVAILABLE_MODELS)
@@ -202,8 +206,8 @@ def register_routes(app: Flask) -> None:
     @app.route("/api/team_info", methods=["GET"])
     def api_team_info():
         return jsonify({
-            "group_batch_order_number": "Batch 2, Order 7",
-            "team_name": "FINERIS Team",
+            "group_batch_order_number": "2_7",
+            "team_name": "יוסרא פחאמנה + אלעד פולק + מארון עילבוני",
             "students": [
                 {"name": "Yosra Fhamne",     "email": "soso7492@campus.technion.ac.il"},
                 {"name": "Elad Elie Pollak",  "email": "eladpollak@campus.technion.ac.il"},
@@ -215,16 +219,24 @@ def register_routes(app: Flask) -> None:
     def api_agent_info():
         return jsonify({
             "description": (
-                "FINERIS is a multi-agent autonomous portfolio management system. "
-                "It consists of four specialized LLM agents — PromptParser, Supervisor, Guardian, and Scout — "
-                "orchestrated via a LangGraph state machine, powered by LLMod AI."
+                "FINERIS (Financial Reasoning & Intelligence System) is an autonomous multi-agent financial consulting system. "
+                "It helps everyday individuals make sense of their portfolio and the broader financial environment by combining "
+                "three autonomous capabilities: asset discovery (scanning stocks and ETFs based on user preferences), "
+                "news-impact analysis (classifying financial news sentiment and detecting market-moving events), "
+                "and lightweight analytics (momentum scoring, fundamentals evaluation, and risk-adjusted recommendations). "
+                "The system is built on a LangGraph state machine orchestrating four specialized LLM agents — "
+                "PromptParser, Supervisor, Guardian, and Scout — powered by LLMod AI and live market data via yfinance."
             ),
             "purpose": (
-                "Given a natural-language investor prompt, FINERIS parses the portfolio, "
-                "fetches live market data via yfinance, classifies news sentiment, "
-                "evaluates held positions (Guardian: HOLD/SELL), "
-                "and scans watchlist candidates (Scout: BUY/PASS), "
-                "returning actionable investment alerts."
+                "FINERIS solves the challenge individuals face when trying to translate unstructured financial information "
+                "into clear, actionable investment decisions. Given a natural-language prompt describing a portfolio, "
+                "holdings, watchlist, risk tolerance, and budget, FINERIS autonomously: "
+                "(1) parses the investor profile using PromptParser, "
+                "(2) fetches live prices, fundamentals, and news via yfinance, "
+                "(3) classifies news sentiment via the Supervisor agent, "
+                "(4) evaluates held positions for risk using the Guardian agent (HOLD/SELL), and "
+                "(5) scans watchlist candidates for growth opportunities using the Scout agent (BUY/PASS). "
+                "The result is a set of personalized, risk-aware investment alerts with full reasoning traces."
             ),
             "prompt_template": {
                 "template": (
@@ -307,7 +319,7 @@ def register_routes(app: Flask) -> None:
         body = request.get_json(silent=True) or {}
         prompt = (body.get("prompt") or "").strip()
         if not prompt:
-            return jsonify({"status": "error", "error": "prompt is required", "response": "", "steps": []}), 400
+            return jsonify({"status": "error", "error": "prompt is required", "response": None, "steps": []}), 400
 
         # 1. Resolve model (optional — defaults to Config.MODEL if missing/invalid)
         requested_model = body.get("model", "")
@@ -319,7 +331,7 @@ def register_routes(app: Flask) -> None:
         try:
             parsed = PromptParser().parse(prompt)
         except Exception as e:
-            return jsonify({"status": "error", "error": f"Parsing failed: {e}", "response": "", "steps": []}), 500
+            return jsonify({"status": "error", "error": f"Parsing failed: {e}", "response": None, "steps": []}), 500
 
         # 2b. Reject non-financial prompts
         if not parsed.is_financial:
@@ -369,7 +381,7 @@ def register_routes(app: Flask) -> None:
         try:
             notifications, cycle_errors = FinerisSystem(model=model).run_cycle_with_data(holdings, parsed.budget, profile)  # type: ignore[misc]
         except Exception as e:
-            return jsonify({"status": "error", "error": f"Cycle failed: {e}", "response": "", "steps": []}), 500
+            return jsonify({"status": "error", "error": f"Cycle failed: {e}", "response": None, "steps": []}), 500
 
         # 4. Build response
         response_lines = []

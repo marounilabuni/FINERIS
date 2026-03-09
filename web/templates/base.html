@@ -13,9 +13,10 @@
   <a class="navbar-brand fw-bold fs-4" href="/">⚡ FINERIS</a>
   <div class="navbar-nav ms-auto">
     <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Dashboard</a>
-    <a class="nav-link {% if request.path.startswith('/analyze') %}active{% endif %}" href="/analyze">Analyze</a>
     <a class="nav-link {% if request.path.startswith('/portfolio') %}active{% endif %}" href="/portfolio">Portfolio</a>
     <a class="nav-link {% if request.path.startswith('/profile') %}active{% endif %}" href="/profile">Profile</a>
+    <a class="nav-link {% if request.path.startswith('/analyze') %}active{% endif %}" href="/analyze">Analyze</a>
+    <a class="nav-link {% if request.path.startswith('/about') %}active{% endif %}" href="/about">About</a>
   </div>
 </nav>
 

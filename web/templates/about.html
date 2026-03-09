@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}— About{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <h2 class="fw-bold">About FINERIS</h2>
+  <p class="text-muted">Generative AI for Data Science Applications — Assignment 2, Technion</p>
+</div>
+
+<!-- Team Info -->
+<div class="card mb-4">
+  <div class="card-header fw-bold">Team Info</div>
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-4">Name</th>
+          <th>Email</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="ps-4">Yosra Fhamne</td>
+          <td>soso7492@campus.technion.ac.il</td>
+        </tr>
+        <tr>
+          <td class="ps-4">Elad Elie Pollak</td>
+          <td>eladpollak@campus.technion.ac.il</td>
+        </tr>
+        <tr>
+          <td class="ps-4">Maroun Ilabuni</td>
+          <td>marounila@campus.technion.ac.il</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="px-4 py-2 text-muted small">Group Batch 2 · Order 7</div>
+  </div>
+</div>
+
+<!-- Agent Description -->
+<div class="card mb-4">
+  <div class="card-header fw-bold">Agent Description</div>
+  <div class="card-body">
+    <p><strong>FINERIS</strong> (Financial Reasoning &amp; Intelligence System) is an autonomous multi-agent financial consulting system.
+    It helps everyday individuals make sense of their portfolio and the broader financial environment by combining three autonomous capabilities:</p>
+    <ul>
+      <li><strong>Asset Discovery</strong> — scans stocks and ETFs based on user preferences and watchlist</li>
+      <li><strong>News-Impact Analysis</strong> — classifies financial news sentiment and detects market-moving events</li>
+      <li><strong>Lightweight Analytics</strong> — momentum scoring, fundamentals evaluation, and risk-adjusted recommendations</li>
+    </ul>
+    <p>The system is built on a <strong>LangGraph</strong> state machine orchestrating four specialized LLM agents —
+    <strong>PromptParser</strong>, <strong>Supervisor</strong>, <strong>Guardian</strong>, and <strong>Scout</strong> —
+    powered by <strong>LLMod AI</strong> and live market data via <strong>yfinance</strong>.</p>
+    <p class="mb-0"><strong>How it works:</strong> Given a natural-language prompt, FINERIS
+    (1) parses the investor profile, (2) fetches live prices, fundamentals &amp; news,
+    (3) classifies news sentiment via Supervisor, (4) evaluates held positions via Guardian (<strong>HOLD/SELL</strong>),
+    and (5) scans watchlist candidates via Scout (<strong>BUY/PASS</strong>) —
+    returning personalized, risk-aware investment alerts with full reasoning traces.</p>
+  </div>
+</div>
+
+<!-- Architecture -->
+<div class="card mb-4">
+  <div class="card-header fw-bold">System Architecture</div>
+  <div class="card-body text-center p-3">
+    <img src="{{ url_for('static', filename='architecture.png') }}"
+         alt="FINERIS Architecture"
+         class="img-fluid rounded"
+         style="max-width: 100%;">
+  </div>
+</div>
+{% endblock %}
